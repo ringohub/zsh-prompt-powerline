@@ -151,7 +151,7 @@ prompt_powerline_ps1 () {
         # otherwise, don't care
     else
         # get a number from the sha1 hash of the hostname
-        host_color=${${"$(sha1sum <<< $HOST)"//[a-z]#/}[1,14]}
+        host_color=${${"$(shasum <<< $HOST)"//[a-z]#/}[1,14]}
         # divide by 256/88/8/whatever
         host_color=$(( host_color % $terminfo[colors] ))
     fi
