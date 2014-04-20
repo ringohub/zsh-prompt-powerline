@@ -29,7 +29,7 @@ prompt_powerline_vcsstyles () {
     # set formats
     local FMT_BRANCH="%b%u%c" # e.g. master¹²
     local FMT_ACTION="(%F{cyan}%a%f)"   # e.g. (rebase-i)
-    local FMT_PATH="%K{green}$sep1%F{white} %R%F{black}%f %F{green}"              # e.g. ~/repo/subdir
+    local FMT_PATH="%K{green}$sep1%F{white} %R%%F{white}/%U%S%%u%f%F{green} "              # e.g. ~/repo/subdir
 
     # we only use one, so onl pay for one.
     zstyle ':vcs_info:*:powerline:*' max-exports 1
