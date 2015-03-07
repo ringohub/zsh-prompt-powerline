@@ -49,4 +49,4 @@
     fi
 }
 
-zstyle ':vcs_info:git+set-message:*' hooks git-tracking git-stash
+zstyle ':vcs_info:git+set-message:*' hooks git-tracking git-stash git-untracked git-nomerge-branch git-push-status git-hook-begin

@@ -15,6 +15,8 @@ prompt_powerline_help () {
             # if this is a remote shell, e.g. [[ -n $SSH_CONNECTION ]]
             zstyle ':prompt:powerline:ps1' hide-user
 
+            zstyle ':prompt:powerline:ps1' hide-host
+
             # explicit color used for the hostname, otherwise a hash-based one
             # will be selected
             zstyle ':prompt:powerline:ps1' host-color
@@ -49,14 +51,14 @@ prompt_powerline_vcsstyles () {
     zstyle ':vcs_info:hg:powerline:*' actionformats  "%K{23}$sep1%F{123} ☿ ${FMT_BRANCH}${FMT_ACTION} %F{23}${FMT_PATH} "
 
     # special git stuff
-    zstyle ':vcs_info:git:powerline:*' formats       "${FMT_PATH}%K{23}$sep1%F{123} ± ${FMT_BRANCH} %m%F{23} "
-    zstyle ':vcs_info:git:powerline:*' actionformats "${FMT_PATH}%K{23}$sep1%F{123} ± ${FMT_BRANCH}${FMT_ACTION} %m%F{23} "
+    zstyle ':vcs_info:git:powerline:*' formats       "${FMT_PATH}%K{23}$sep1%F{123} ${branch_char} ${FMT_BRANCH}%m%F{23-} %u%c"
+    zstyle ':vcs_info:git:powerline:*' actionformats "${FMT_PATH}%K{23}$sep1%F{123} ${branch_char} ${FMT_BRANCH}${FMT_ACTION}%m%F{23-} "
 
     # lofi formats
     # for details see here: https://github.com/Valodim/zshrc/blob/master/custom/96-vcs_info-lofi.zsh
     zstyle ':vcs_info:*:powerline:*'   lofiformats   "%K{23}$sep1%F{123} %s %F{23}${FMT_PATH} "
     zstyle ':vcs_info:hg:powerline:*'  lofiformats   "%K{23}$sep1%F{123} ☿ %F{23}${FMT_PATH} "
-    zstyle ':vcs_info:git:powerline:*' lofiformats   "%K{23}$sep1%F{123} ± %F{23}${FMT_PATH} "
+    zstyle ':vcs_info:git:powerline:*' lofiformats   "%K{23}$sep1%F{123} ${branch_char} %F{23}${FMT_PATH} "
 
     # see https://github.com/Valodim/zshrc/blob/master/custom/96-vcs_info-githooks.zsh
     # tracking formats: behind, ahead and seperator
@@ -141,6 +143,11 @@ prompt_powerline_precmd () {
 prompt_powerline_ps1 () {
     setopt localoptions noksharrays extendedglob
 
+    local host=""
+    if ! zstyle -t ':prompt:powerline:ps1' hide-host; then
+       host=${HOST}
+    fi
+
     local host_color
     # can we even make any assumptions about the terminal?
     if ! (( $+terminfo[colors] )); then
@@ -167,15 +174,15 @@ prompt_powerline_ps1 () {
     zstyle -s ':prompt:powerline:ps1' default-sh-level default_level || default_level=1
     # using eval here because (l::) expansion flag doesn't support variables.
     # someone who can sneak in variables here can do code execution anyways~
-    eval 'local shlvl="%K{234}%F{$host_color} ${(l:$SHLVL-$default_level::'$sep2':):-} "'
+    eval 'local shlvl="%K{234}%F{$host_color} ${(l:$SHLVL-$default_level::'$sep2':):-}"'
 
-    local userhost="%F{$host_color}${HOST}${user}"
+    local userhost="%F{$host_color}${host}${host:+ }${user}"
     local jobstat="%(1j.%K{green}$sep1%F{white} %B%j %b%F{green}.)"
     # we do the $HOME replacement here to avoid annoyingly long paths. It's not
     # as good as (D), but oh well!
     local gitinfo='${${vcs_info_msg_0_%%.}/$HOME/~}'
 
-    PS1="${shlvl}${userhost} \$prompt_bits${jobstat}${gitinfo}%k$sep1%b%f "
+    PS1="${shlvl-}${userhost}\$prompt_bits${jobstat}${gitinfo}%k$sep1%b%f "
 }
 
 prompt_powerline_ps2 () {
