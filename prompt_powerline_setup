@@ -31,10 +31,11 @@ prompt_powerline_vcsstyles () {
     # set formats
     local FMT_BRANCH="%b%u%c" # e.g. master¹²
     local FMT_ACTION="(%F{cyan}%a%f)"   # e.g. (rebase-i)
-    local FMT_PATH="%K{green}$sep1%F{white} %R%%F{white}/%U%S%%u%f%F{green} "              # e.g. ~/repo/subdir
+    local FMT_PATH="%K{green}$sep1%F{white} %R/%U%S%%u%f %F{green}"              # e.g. ~/repo/subdir
+    #local FMT_PATH="%K{green}$sep1%F{white} %R%%F{white}/%U%S%%u%f%F{green} "              # e.g. ~/repo/subdir
 
     # we only use one, so onl pay for one.
-    zstyle ':vcs_info:*:powerline:*' max-exports 1
+    zstyle ':vcs_info:*:powerline:*' max-exports 3
 
     zstyle ':vcs_info:*:powerline:*' unstagedstr '¹'  # display ¹ if there are unstaged changes
     zstyle ':vcs_info:*:powerline:*' stagedstr '²'    # display ² if there are staged changes
@@ -46,19 +47,14 @@ prompt_powerline_vcsstyles () {
     zstyle ':vcs_info:*:powerline:*' formats         "%K{23}$sep1%F{123} %s ${FMT_BRANCH} %F{23}${FMT_PATH} "
     zstyle ':vcs_info:*:powerline:*' actionformats   "%K{23}$sep1%F{123} %s ${FMT_BRANCH}${FMT_ACTION} %F{23}${FMT_PATH} "
 
-    # special hg stuff
-    zstyle ':vcs_info:hg:powerline:*'  formats       "%K{23}$sep1%F{123} ☿ ${FMT_BRANCH} %F{23} ${FMT_PATH} "
-    zstyle ':vcs_info:hg:powerline:*' actionformats  "%K{23}$sep1%F{123} ☿ ${FMT_BRANCH}${FMT_ACTION} %F{23}${FMT_PATH} "
-
     # special git stuff
-    zstyle ':vcs_info:git:powerline:*' formats       "${FMT_PATH}%K{23}$sep1%F{123} ${branch_char} ${FMT_BRANCH}%m%F{23-} %u%c"
-    zstyle ':vcs_info:git:powerline:*' actionformats "${FMT_PATH}%K{23}$sep1%F{123} ${branch_char} ${FMT_BRANCH}${FMT_ACTION}%m%F{23-} "
+    zstyle ':vcs_info:git:powerline:*' formats       "${FMT_PATH}%K{23}$sep1%F{123} ${git_cahr} %r ${sep2} ${branch_char} ${FMT_BRANCH}%m%F{23-} %u%c"
+    zstyle ':vcs_info:git:powerline:*' actionformats "${FMT_PATH}%K{23}$sep1%F{123} ${git_cahr} %r ${sep2} ${branch_char} ${FMT_BRANCH}${FMT_ACTION}%m%F{23-} "
 
     # lofi formats
     # for details see here: https://github.com/Valodim/zshrc/blob/master/custom/96-vcs_info-lofi.zsh
     zstyle ':vcs_info:*:powerline:*'   lofiformats   "%K{23}$sep1%F{123} %s %F{23}${FMT_PATH} "
-    zstyle ':vcs_info:hg:powerline:*'  lofiformats   "%K{23}$sep1%F{123} ☿ %F{23}${FMT_PATH} "
-    zstyle ':vcs_info:git:powerline:*' lofiformats   "%K{23}$sep1%F{123} ${branch_char} %F{23}${FMT_PATH} "
+    zstyle ':vcs_info:git:powerline:*' lofiformats   "%{%K{23}$sep1%F{123} ${git_cahr} %r ${branch_char} %F{23}${FMT_PATH} %}"
 
     # see https://github.com/Valodim/zshrc/blob/master/custom/96-vcs_info-githooks.zsh
     # tracking formats: behind, ahead and seperator
@@ -109,7 +105,7 @@ prompt_powerline_precmd () {
         fi
     fi
     if [[ ! -w $PWD && ! -r $PWD ]]; then
-        prompt_bits+=( "%F{red}⭤ " )
+        prompt_bits+=( "%F{red}${lock_char} " )
     fi
 
     # end the hostname background
@@ -174,15 +170,16 @@ prompt_powerline_ps1 () {
     zstyle -s ':prompt:powerline:ps1' default-sh-level default_level || default_level=1
     # using eval here because (l::) expansion flag doesn't support variables.
     # someone who can sneak in variables here can do code execution anyways~
-    eval 'local shlvl="%K{234}%F{$host_color} ${(l:$SHLVL-$default_level::'$sep2':):-}"'
+    eval 'local shlvl="%K{234}%F{$host_color} ${(l:$SHLVL-$default_level::'${shlvl_char}':):-} "'
+    #local shlvl="%K{234}%F{$host_color} ${shlvl_char}${SHLVL-$default_level}"
 
     local userhost="%F{$host_color}${host}${host:+ }${user}"
-    local jobstat="%(1j.%K{green}$sep1%F{white} %B%j %b%F{green}.)"
+    local jobstat="%(1j.%K{green}$sep1%F{white} ${jobstat_char} %B%j%b%F{green}.)"
     # we do the $HOME replacement here to avoid annoyingly long paths. It's not
     # as good as (D), but oh well!
     local gitinfo='${${vcs_info_msg_0_%%.}/$HOME/~}'
 
-    PS1="${shlvl-}${userhost}\$prompt_bits${jobstat}${gitinfo}%k$sep1%b%f "
+    PS1="${shlvl-}${userhost}\${prompt_bits}${jobstat}${gitinfo}%k$sep1%b%f "
 }
 
 prompt_powerline_ps2 () {
@@ -211,9 +208,20 @@ a prompt with powerline patched font not supporting 256 colors is kind of a Rari
     zstyle -s ':prompt:poweline:ps1:' sep2-char sep2 || sep2='⮁'
     zstyle -s ':prompt:poweline:ps1:' lock-char lock_char || lock_char='⭤'
     zstyle -s ':prompt:poweline:ps1:' branch-char branch_char || branch_char='⭠'
+    zstyle -s ':prompt:poweline:ps1:' git-char git_char || git_cahr=' '
+    zstyle -s ':prompt:poweline:ps1:' shell-level-char shlvl_char || shlvl_char=''
+    zstyle -s ':prompt:poweline:ps1:' jobstat-char jobstat_char || jobstat_char=''
+    # : e1aa
+    # : e140
+    # : e1ec
+    # : e123
+    # : e81a
+    # : e262
+    #  : f008
 
     # load vcs_info styles
     autoload -Uz vcs_info
+    zstyle ':vcs_info:*' enable git
     prompt_powerline_vcsstyles
 
     # set up left-side prompt(s)
